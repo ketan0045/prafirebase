@@ -1,0 +1,472 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# sign up same email  each it is 
+
+# that login same email above uses
+# firebase that potano store
+# dispatch and navigate []
+# outlet
+
+///////
+action js ////
+import * as types from "./actionTypes";
+import { toast } from "react-toastify";
+import { auth, googleAuthProvider } from "../firebase";
+const registerStart = () => ({
+  type: types.REGISTER_START,
+});
+
+const registerSuccess = (user) => ({
+  type: types.REGISTER_SUCCESS,
+  payload: user,
+});
+
+const registerFail = (error) => ({
+  type: types.REGISTER_FAIL,
+  payload: error,
+});
+
+const loginStart = () => ({
+  type: types.LOGIN_START,
+});
+
+const loginSuccess = (user) => ({
+  type: types.LOGIN_SUCCESS,
+  payload: user,
+});
+
+const loginFail = (error) => ({
+  type: types.LOGIN_FAIL,
+  payload: error,
+});
+
+const logoutStart = () => ({
+  type: types.LOGOUT_START,
+});
+
+const logoutSuccess = () => ({
+  type: types.LOGOUT_SUCCESS,
+});
+
+const logoutFail = (error) => ({
+  type: types.LOGOUT_FAIL,
+  payload: error,
+});
+
+export const setUser = (user) => ({
+  type: types.SET_USER,
+  payload: user,
+});
+
+const googleSignInStart = () => ({
+  type: types.GOOGLE_SIGN_IN_START,
+});
+
+const googleSignInSuccess = (user) => ({
+  type: types.GOOGLE_SIGN_IN_SUCCESS,
+  payload: user,
+});
+
+const googleSignInFail = (error) => ({
+  type: types.GOOGLE_SIGN_IN_FAIL,
+  payload: error,
+});
+
+export const registerInitiate = (email, password, dispalyName) => {
+  return function (dispatch) {
+    dispatch(registerStart());
+    auth
+      .createUserWithEmailAndPassword(email, password)
+      .then(({ user }) => {
+        user.updateProfile({
+          dispalyName,
+        });
+        dispatch(registerSuccess(user));
+      })
+      //   .catch((error) => dispatch(registerFail(error.message)));
+      // toast.error("invalid registerFail");
+      .catch((error) => {
+        dispatch(registerFail(error.message));
+        toast.error(`invalid registerFail.. ${error.message}`);
+      });
+  };
+};
+
+export const loginInitiate = (email, password) => {
+  return function (dispatch) {
+    dispatch(loginStart());
+    auth
+      .signInWithEmailAndPassword(email, password)
+      .then(({ user }) => {
+        dispatch(loginSuccess(user));
+      })
+      .catch((error) => {
+        dispatch(loginFail(error.message));
+        toast.error(`invalid loginFail.. ${error.message}`);
+      });
+  };
+};
+
+export const logoutInitiate = () => {
+  return function (dispatch) {
+    dispatch(logoutStart());
+    auth
+      .signOut()
+      .then((resp) => dispatch(logoutSuccess()))
+      .catch((error) => {
+        dispatch(logoutFail(error.message));
+        toast.error("invalid loginFail");
+      });
+  };
+};
+
+export const googleSignInInitiate = () => {
+  return function (dispatch) {
+    dispatch(googleSignInStart());
+    auth
+      .signInWithPopup(googleAuthProvider)
+      .then(({ user }) => {
+        dispatch(googleSignInSuccess(user));
+      })
+      .catch((error) => {
+        dispatch(googleSignInFail(error.message));
+        toast.error("googleSignInFail ");
+      });
+  };
+};
+
+action ls ////
+
+
+register.js ////
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import "./Register.css";
+import { registerInitiate } from "../redux/action";
+
+const Register = () => {
+  const [state, setState] = useState({
+    dispalyName: "",
+    email: "",
+    password: "",
+    passwordConfirm: "",
+  });
+  const { email, password, dispalyName, passwordConfirm } = state;
+
+  //   const {currentus} = useSelector((state)=>state.user)
+  const { currentUser} = useSelector((state) => state.user);
+
+
+  const navigate = useNavigate();
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (currentUser) {
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
+  // }, [currentUser,navigate])
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (password !== passwordConfirm) {
+      return;
+    }
+    dispatch(registerInitiate(email, password, dispalyName));
+    // setState({ email: "", dispalyName: "", password: "", passwordConfirm: "" });
+  };
+
+  const handleChange = (e) => {
+    setState({ ...state, [e.target.name]: e.target.value });
+  };
+  return (
+    <div>
+      <div id="register-form">
+        <form className="form-signup" onSubmit={handleSubmit}>
+          <h1
+            className="h3 mb-3 font-weight-normal"
+            style={{ textAlign: "center" }}
+          >
+            Sign up
+          </h1>
+          <input
+            type="text"
+            id="displayName"
+            className="form-control"
+            placeholder="full name"
+            name="dispalyName"
+            onChange={handleChange}
+            value={dispalyName}
+            required
+          />
+          <br />
+          <input
+            type="email"
+            id="user-email"
+            className="form-control"
+            placeholder="Email Address"
+            name="email"
+            onChange={handleChange}
+            value={email}
+            required
+          />
+          <br />
+          <input
+            type="password"
+            id="inputpassword"
+            className="form-control"
+            placeholder="Email password"
+            name="password"
+            onChange={handleChange}
+            value={password}
+            required
+          />
+          <br />
+          <input
+            type="password"
+            id="inputRepassword"
+            className="form-control"
+            placeholder="Repeat password"
+            name="passwordConfirm"
+            onChange={handleChange}
+            value={passwordConfirm}
+            required
+          />
+          <button className="btn btn-primary btn-block" type="submit">
+            <i className="fas fa-user-plus"></i>Sign up
+          </button>
+          <Link to="/login">
+            <i className="fas fa-angle-left"></i>Back
+          </Link>
+        </form>
+        <br />
+      </div>
+    </div>
+  );
+};
+
+export default Register;
+
+register.js ////
+
+login.js////
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { googleSignInInitiate, loginInitiate } from "../redux/action";
+import "./Login.css";
+const Login = () => {
+  const [state, setState] = useState({
+    email: "",
+    password: "",
+  });
+  const { email, password } = state;
+  
+  const { currentUser } = useSelector((state) => state.user);
+
+  const navigate = useNavigate();
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (currentUser) {
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
+
+  const handleGoogleSignIn = () => {
+    dispatch(googleSignInInitiate());
+  };
+  const handleFBSignIn = () => {};
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      return;
+    }
+    dispatch(loginInitiate(email, password));
+    // setState({ email: "", password: "" });
+  };
+  const handleChange = (e) => {
+    setState({ ...state, [e.target.name]: e.target.value });
+  };
+
+  return (
+    <div>
+      <div id="logreg-forms">
+        <form className="form-signin" onSubmit={handleSubmit}>
+          <h1
+            className="h3 mb-3 font-weight-normal"
+            style={{ textAlign: "center" }}
+          >
+            Sign in
+          </h1>
+          <div className="social-login">
+            <button
+              className="btn google-btn social-btn"
+              type="button"
+              onClick={handleGoogleSignIn}
+            >
+              <span>
+                <i className="fab fa-google-plus-g"></i> Sign in with Google+
+              </span>
+            </button>
+            <button
+              className="btn facebook-btn social-btn"
+              type="button"
+              onClick={handleFBSignIn}
+            >
+              <span>
+                <i className="fab fa-facebook-f"></i> Sign in with Facebook
+              </span>
+            </button>
+          </div>
+          <p style={{ textAlign: "center" }}>OR</p>
+          <input
+        //  autoComplete="new-password"
+            type="email"
+            id="inputEmail"
+            className="form-control"
+            placeholder="Email Address"
+            name="email"
+            onChange={handleChange}
+            value={email}
+            required      
+          />
+          <br />
+          <input
+        //  autoComplete="new-password"
+            type="password"
+            id="inputpassword"
+            className="form-control"
+            placeholder="Enter password"
+            name="password"
+            onChange={handleChange}
+            value={password}
+            required 
+          />
+          <button className="btn btn-secondry btn-block" type="submit">
+            <i className="fas fa-sign-in-alt"></i>Sign In
+          </button>
+          <hr />
+          <p>Don't have any account</p>
+          <Link to="/register">
+            <button
+              className="btn btn-primary btn-block"
+              type="button"
+              id="btn-signup"
+            >
+              <i className="fas fa-user-plus"></i>Sign up New account
+            </button>
+          </Link>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
+
+login.js ////
+
+Loadingtoredirect ///
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+const LoadingToRedirect = () => {
+  const [count, setCount] = useState(5);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCount((currentcont) => --currentcont);
+    }, 1000);
+
+    count === 0 && navigate("/login");
+    return () => {
+      clearInterval(interval);
+    };
+  }, [count, navigate]);
+
+  return (
+    <div>
+      <p>Redirect you in {count} seconds</p>
+    </div>
+  );
+};
+
+export default LoadingToRedirect;
+Loading redirect js ///
+
+userroute.js ////
+// import React from "react";
+// import { Route } from "react-router-dom";
+// import { useSelector } from "react-redux";
+// import LoadingToRedirect from "./LoadingToRedirect";
+
+// const UserRoute = ({ children, ...rest }) => {
+//   const { currentUser } = useSelector((state) => state.user);
+//   return currentUser ? <Route {...rest} /> : <LoadingToRedirect />;
+// };
+
+// export default UserRoute;
+
+// import React from "react";
+// import { Route,Outlet } from "react-router-dom";
+// import { useSelector } from "react-redux";
+// import LoadingToRedirect from "./LoadingToRedirect";
+
+// const UserRoute = ({ children, ...rest }) => {
+
+//   const { currentUser } = useSelector((state) => state.user);
+//   return currentUser ?  <Outlet to="/"/>  : <LoadingToRedirect />;
+// };
+
+// export default UserRoute;
+
+// // https://stackoverflow.com/questions/69864165/error-privateroute-is-not-a-route-component-all-component-children-of-rou
+// // https://flutter-developer.medium.com/solved-privateroute-is-not-a-route-component-777e78e3205b
+// // https://www.youtube.com/watch?v=2k8NleFjG7I&t=535s
+
+// VideoColorSpace The New Way To Create Protected Routes With React Router V6 https://www.youtube.com/watch?v=2k8NleFjG7I&t=526s
+// ckeck or contidion
+
+import React from "react";
+import { Route, Outlet, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import LoadingToRedirect from "./LoadingToRedirect";
+
+const UserRoute = ({}) => {
+  const { currentUser } = useSelector((state) => state.user);
+  return currentUser ? <Outlet /> : <LoadingToRedirect />;
+};
+
+export default UserRoute;
+useroute.js ////
+//////
